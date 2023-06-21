@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>394788 - Yapılacaklar Listesi</title>
+    <!-- 
+    Hüseyin Aslan
+    394788
+    github: https://github.com/HsynAslan/js-to-do-list.git 
+    -->
+
+    <style>
+      .metin-ekle {
+        display: flex;
+      }
+      .input-text {
+        margin-right: 1vh;
+      }
+      .input-text input {
+        font-size: large;
+      }
+      .input-text-button button {
+        background-color: rgb(0, 0, 255, 0.8);
+        color: white;
+        font-size: large;
+        border-radius: 5px;
+      }
+      ul li {
+        list-style-type: none;
+      }
+      li {
+        border: 1px solid;
+        border-radius: 3px;
+        padding: 4px;
+        width: 30%;
+        height: auto;
+        position: relative;
+        margin-left: -5vh;
+        margin-bottom: 7px;
+      }
+      ul li span {
+        margin-left: 10px;
+      }
+      li button {
+        float: right;
+        margin-right: 1vh;
+        background-color: red;
+        color: white;
+        border-radius: 4px;
+      }
+      ul li span {
+        color: #394788;
+        /* öğrenci numaram */
+      }
+    </style>
+  </head>
+  <body>
+    <h2>To Do List - 394788 - Hüseyin Aslan</h2>
+    <div class="container">
+      <div class="metin-ekle">
+        <div class="input-text">
+          <input
+            type="text"
+            id="gorevInput"
+            placeholder="Yeni görev ekle"
+            oninput="buyukHarfeDonustur()"
+          />
+        </div>
+        <div class="input-text-button">
+          <button onclick="gorevEkle(), window.location.reload()">Ekle</button>
+        </div>
+      </div>
+      <div class="listeler">
+        <ul id="gorevListesi"></ul>
+      </div>
+    </div>
+
+    <script>
+      // Sayfa yüklendiğinde önceden kaydedilmiş görevleri getir
+      window.onload = function () {
+        var kaydedilmisGorevler = localStorage.getItem("kaydedilmisGorevler");
+        if (kaydedilmisGorevler) {
+          var gorevListesi = document.getElementById("gorevListesi");
+          gorevListesi.innerHTML = kaydedilmisGorevler;
+          gorevOlayDinleyicileriniEkle();
+          gorevDurumunuGeriYukle(); // Bu satırı buraya taşıyın
+        }
+      };
+
+      // Yeni görev ekleme işlemi
+      function gorevEkle() {
+        var inputAlani = document.getElementById("gorevInput");
+        var inputDegeri = inputAlani.value.trim();
+        if (inputDegeri !== "") {
+          var gorevListesi = document.getElementById("gorevListesi");
+          var yeniGorev = document.createElement("li");
+          var onayKutusu = document.createElement("input");
+          onayKutusu.type = "checkbox";
+          var gorevMetni = document.createElement("span");
+          gorevMetni.textContent = inputDegeri;
+          var silButonu = document.createElement("button");
+          silButonu.textContent = "Sil";
+          silButonu.addEventListener("click", silButonunaTikla);
+          yeniGorev.appendChild(onayKutusu);
+          yeniGorev.appendChild(gorevMetni);
+          yeniGorev.appendChild(silButonu);
+          gorevListesi.appendChild(yeniGorev);
+          goreveOlayDinleyicileriniEkle(yeniGorev);
+          inputAlani.value = "";
+          gorevleriLocalStorageKaydet();
+        }
+      }
+
+      // Checkbox durum değişikliği işlemi
+      function onayKutusuDegisti(event) {
+        var gorevElemani = event.target.parentElement;
+        var gorevMetni = gorevElemani.querySelector("span");
+        if (event.target.checked) {
+          gorevMetni.style.textDecoration = "line-through";
+        } else {
+          gorevMetni.style.textDecoration = "none";
+        }
+        gorevDurumunuLocalStorageKaydet();
+      }
+
+      // Sil butonu tıklama işlemi
+      function silButonunaTikla(event) {
+        var gorevElemani = event.target.parentElement;
+        gorevElemani.remove();
+        gorevleriLocalStorageKaydet();
+        window.location.reload(); // Sayfayı yeniden yükle
+      }
+
+      // Görevleri yerel depolamaya kaydetme işlemi
+      function gorevleriLocalStorageKaydet() {
+        var gorevListesi = document.getElementById("gorevListesi");
+        gorevListesi.style.width = "200px"; // Genişlik değerini ekleyin
+        localStorage.setItem("kaydedilmisGorevler", gorevListesi.innerHTML);
+        gorevDurumunuLocalStorageKaydet(); // Durumları güncelleyin
+      }
+      function buyukHarfeDonustur() {
+        var inputAlani = document.getElementById("gorevInput");
+        inputAlani.value = inputAlani.value.toUpperCase();
+      }
+
+      // Checkbox durumunu yerel depolamaya kaydetme işlemi
+      function gorevDurumunuLocalStorageKaydet() {
+        var gorevElemanlari = document.querySelectorAll("#gorevListesi li");
+        var gorevDurumu = [];
+        gorevElemanlari.forEach(function (eleman) {
+          var onayKutusu = eleman.querySelector('input[type="checkbox"]');
+          gorevDurumu.push({
+            checked: onayKutusu.checked,
+            text: eleman.querySelector("span").textContent,
+          });
+        });
+        localStorage.setItem("gorevDurumu", JSON.stringify(gorevDurumu));
+      }
+
+      // Görevleri ve checkbox durumlarını geri yükleme işlemi
+      function gorevDurumunuGeriYukle() {
+        var gorevElemanlari = document.querySelectorAll("#gorevListesi li");
+        var gorevDurumu = JSON.parse(localStorage.getItem("gorevDurumu"));
+        if (gorevDurumu && gorevDurumu.length === gorevElemanlari.length) {
+          gorevElemanlari.forEach(function (eleman, index) {
+            var onayKutusu = eleman.querySelector('input[type="checkbox"]');
+            var gorevMetni = eleman.querySelector("span");
+            onayKutusu.checked = gorevDurumu[index].checked;
+            if (onayKutusu.checked) {
+              gorevMetni.style.textDecoration = "line-through";
+            } else {
+              gorevMetni.style.textDecoration = "none"; // Üstü çiziliği kaldırmak için bu satırı ekleyin
+            }
+          });
+        }
+      }
+
+      // Görevlere olay dinleyicileri ekleme işlemi
+      function gorevOlayDinleyicileriniEkle() {
+        var onayKutulari = document.querySelectorAll(
+          '#gorevListesi input[type="checkbox"]'
+        );
+        onayKutulari.forEach(function (onayKutusu) {
+          onayKutusu.addEventListener("change", onayKutusuDegisti);
+        });
+        var silButonlari = document.querySelectorAll("#gorevListesi button");
+        silButonlari.forEach(function (silButonu) {
+          silButonu.addEventListener("click", silButonunaTikla);
+        });
+      }
+
+      // Yeni eklenen göreve olay dinleyicileri ekleme işlemi
+      function goreveOlayDinleyicileriniEkle(gorev) {
+        var onayKutusu = gorev.querySelector('input[type="checkbox"]');
+        onayKutusu.addEventListener("change", onayKutusuDegisti);
+        var silButonu = gorev.querySelector("button");
+        silButonu.addEventListener("click", silButonunaTikla);
+      }
+    </script>
+  </body>
+</html>
